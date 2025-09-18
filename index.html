@@ -510,7 +510,6 @@ if (saved) {
   function warm(){ if(warmed) return; const u=new SpeechSynthesisUtterance(" "); u.lang="ja-JP"; u.volume=0; speechSynthesis.speak(u); warmed=true; }
 
   function sayOnce(text,opts={}){
-    speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(text||" ");
     if(jpVoice) u.voice=jpVoice;
     u.lang=(jpVoice && jpVoice.lang) || "ja-JP";
@@ -551,6 +550,7 @@ if (saved) {
   }
 
   async function speak(){
+    speechSynthesis.cancel();
     const t = display.textContent.trim();
     
     if(t === 'すき'){ triggerEmojiAnimation(['❤️']); }
