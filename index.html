@@ -310,6 +310,63 @@ header h1 span::before {
   100% { transform: translateY(-80vh) scale(1.5); opacity: 0; }
 }
 
+  /* ===== スマホ〜小さめiPad縦向け: 900px以下で1カラムに ===== */
+@media (max-width: 900px) {
+  /* タイトルは自動で小さく＆折り返し可に */
+  header h1 {
+    font-size: clamp(18px, 4.5vw, 28px);
+    flex-wrap: wrap;
+    gap: 0.35em;
+  }
+  header h1 span::before {
+    inset: -0.4em;              /* 丸の大きさを少し小さめに */
+    border-radius: 999px;
+  }
+
+  /* 右パネルを下に：デッキは1カラム */
+  .deck {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 8px 10px 10px;
+    overflow: auto;             /* 縦スクロールを許可 */
+  }
+  /* パネルは高さを自動に（はみ出し防止） */
+  .panel {
+    height: auto;
+    max-height: none;
+  }
+
+  /* 余白を少し詰める */
+  :root {
+    --panelGap: 10px;
+    --gap: 8px;
+  }
+
+  /* 表示欄も少しだけ低く・文字も自動縮小 */
+  .display{
+    min-height: calc(var(--key) * 0.8);
+    font-size: clamp(16px, calc(var(--key) * 0.45), 24px);
+  }
+
+  /* 下アクション列の高さをやや低く */
+  .spaceKey, .okKey, .actionRow .charToggle {
+    height: calc(var(--okSize) * 0.9);
+  }
+}
+
+/* ===== さらに狭いiPhone系（480px以下）の微調整 ===== */
+@media (max-width: 480px) {
+  :root{
+    --gap: 6px;
+  }
+  .display{
+    min-height: calc(var(--key) * 0.7);
+    font-size: clamp(14px, calc(var(--key) * 0.4), 20px);
+  }
+  .sliders label{ font-size: 12px; line-height: 1.2; }
+  .nkey { height: clamp(52px, calc(var(--panelW)/3 - 18px), 88px); }
+}
+
 </style>
 </head>
 <body class="theme-blue">
