@@ -1,11 +1,11 @@
 // sw.js - Offline support for 'よんで！'
-const CACHE_NAME = 'yonde-v1';
+const CACHE_NAME = 'yonde-v3';
 const APP_SHELL = [
   './',
-  './index.html',
-  './manifest.json',
-  './yonde_icon_192.png',
-  './yonde_icon_512.png'
+  './yonde-aiueo/index.html',
+  './yonde-aiueo/manifest.json',
+  './yonde-aiueo/icon/icon_192.png',
+  './yonde-aiueo/icon/icon_512.png'
   // 他に分割した CSS/JSや画像があればここへ追加
 ];
 
