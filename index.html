@@ -547,7 +547,7 @@ if (saved) {
   document.documentElement.style.setProperty('--wallOpacity', .10);
 }
 
-  let voices=[], jpVoice=null, warmed=false, charMode=true;
+  let voices=[], jpVoice=null, warmed=false, charMode=false;
   const voiceSel=document.getElementById('voiceSelect');
   const charToggleBtn=document.getElementById('charToggleBtn');
   function uniqVoices(){
@@ -649,26 +649,40 @@ function sayOnce(text, opts={}){
   }
 
   function autoFit(){
-    const vw = innerWidth, vh = innerHeight;
-    const portrait = vh > vw;
-    const gutters = 12 + 12 + 12;
-    const innerVW = Math.max(320, vw - gutters);
-    const ratio  = portrait ? 0.28 : 0.30;
-    const minW   = portrait ? 170 : 190;
-    const maxW   = portrait ? 300 : 320;
-    const panelW = Math.max(minW, Math.min(maxW, Math.round(innerVW * ratio)));
-    document.documentElement.style.setProperty('--panelW', panelW + 'px');
-    const leftW = document.querySelector('.boardWrap').clientWidth;
-    const gap   = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 10;
-    const keyW = Math.floor((leftW - (10 - 1) * gap) / 10);
-    const bw   = document.querySelector('.boardWrap');
-    const totalRows  = 7, totalGaps = 6, spacersHeight = 8 + 8;
-    const rowsH = bw.clientHeight - spacersHeight;
-    const keyH  = Math.floor((rowsH - totalGaps * gap) / totalRows);
-    const key = Math.max(48, Math.min(104, Math.min(keyW, keyH)));
-    document.documentElement.style.setProperty('--key', key + 'px');
-    document.documentElement.style.setProperty('--okSize', key + 'px');
-  }
+  // 右パネルの幅は端末の向きで少し変える（任意）
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const portrait = vh > vw;
+  const ratio = portrait ? 0.32 : 0.28;           // ←お好みで微調整OK
+  const panelW = Math.round(vw * ratio);
+  document.documentElement.style.setProperty('--panelW', panelW + 'px');
+
+  // キーボード面（左）の内寸からキーサイズを計算
+  const board = document.querySelector('.boardWrap');
+  if (!board) return;
+
+  const rootStyle = getComputedStyle(document.documentElement);
+  const gap = parseInt(rootStyle.getPropertyValue('--gap')) || 10;
+
+  // 10列 × 7行、行間・列間のギャップ合計を控除
+  const cols = 10, rows = 7;
+  const totalGapsX = (cols - 1) * gap;
+  const totalGapsY = (rows - 1) * gap + 16;  // ← grid内の8pxスペーサー×2ぶん
+
+  const bw = board.clientWidth;
+  const bh = board.clientHeight;
+
+  const availW = bw - totalGapsX;
+  const availH = bh - totalGapsY;
+
+  // 横・縦のどちらにも収まる最大サイズを採用（最小値の縛りは外す）
+  const keyW = Math.floor(availW / cols);
+  const keyH = Math.floor(availH / rows);
+  const key  = Math.min(keyW, keyH);
+
+  document.documentElement.style.setProperty('--key', key + 'px');
+  document.documentElement.style.setProperty('--okSize', key + 'px');
+}
 
   document.getElementById('questionKey').addEventListener('click', ()=>insertText('？'), {passive:true});
   document.getElementById('spaceBtn').addEventListener('click', ()=>insertText(' '), {passive:true});
