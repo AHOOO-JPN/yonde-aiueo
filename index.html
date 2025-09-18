@@ -509,16 +509,18 @@ if (saved) {
   voiceSel.addEventListener('change',()=>{ jpVoice=voices[voiceSel.selectedIndex]||null; });
   function warm(){ if(warmed) return; const u=new SpeechSynthesisUtterance(" "); u.lang="ja-JP"; u.volume=0; speechSynthesis.speak(u); warmed=true; }
 
-  function sayOnce(text,opts={}){
-    const u=new SpeechSynthesisUtterance(text||" ");
-    if(jpVoice) u.voice=jpVoice;
-    u.lang=(jpVoice && jpVoice.lang) || "ja-JP";
-    const rate=parseFloat(document.getElementById('rate')?.value||"1.0");
-    const pitch=parseFloat(document.getElementById('pitch')?.value||"1.0");
-    u.rate=opts.rate??rate; u.pitch=opts.pitch??pitch;
-    speechSynthesis.speak(u);
-    return new Promise(res=>{u.onend=res; u.onerror=res;});
-  }
+function sayOnce(text, opts={}){
+  try { speechSynthesis.resume(); } catch(e){}
+  const u = new SpeechSynthesisUtterance(text || " ");
+  if (jpVoice) u.voice = jpVoice;
+  u.lang = (jpVoice && jpVoice.lang) || "ja-JP";
+  const rate  = parseFloat(document.getElementById('rate')?.value || "1.0");
+  const pitch = parseFloat(document.getElementById('pitch')?.value || "1.0");
+  u.rate  = opts.rate  ?? rate;
+  u.pitch = opts.pitch ?? pitch;
+  speechSynthesis.speak(u);
+  return new Promise(res=>{ u.onend=res; u.onerror=res; });
+}
 
   async function speakCharByChar(t){
     const a=Array.from(t);
@@ -550,7 +552,6 @@ if (saved) {
   }
 
   async function speak(){
-    speechSynthesis.cancel();
     const t = display.textContent.trim();
     
     if(t === 'すき'){ triggerEmojiAnimation(['❤️']); }
@@ -643,25 +644,36 @@ if (saved) {
     updateCharToggle();
   }
 
-// ===== iOS/Safari 用：最初のユーザー操作で TTS を解錠 =====
 function unlockTTS() {
   try {
-    warm();                 // 無音で一度発話キック
-    // 念のためボイス再取得
-    if ('speechSynthesis' in window) {
-      populateVoices();
-      // まれに即時だと空のままなので少し後にも再実行
-      setTimeout(populateVoices, 200);
-    }
+    // Safari が paused なことがある
+    speechSynthesis.resume();
+
+    // 無音で一度キック
+    const u = new SpeechSynthesisUtterance(" ");
+    u.lang = "ja-JP";
+    u.volume = 0;
+    speechSynthesis.speak(u);
   } catch(e) {}
-  // 一度実行したらリスナー解除
+
+  // ボイスは何度か再取得（iOSは非同期で遅れてくることがある）
+  populateVoices();
+  setTimeout(populateVoices, 200);
+  setTimeout(populateVoices, 800);
+
+  // 1 回解錠したらリスナーは外す
   ['touchstart','mousedown','keydown'].forEach(ev=>{
-    document.removeEventListener(ev, unlockTTS, {passive:true});
+    document.removeEventListener(ev, unlockTTS, true);
   });
 }
-// 起動後、最初のユーザー操作で解錠
+// capture: true にして一度だけ
 ['touchstart','mousedown','keydown'].forEach(ev=>{
-  document.addEventListener(ev, unlockTTS, {passive:true});
+  document.addEventListener(ev, unlockTTS, { once:true, capture:true });
+});
+
+// タブ復帰時に勝手に pause されている対策
+document.addEventListener('visibilitychange', ()=>{
+  if (!document.hidden) { try { speechSynthesis.resume(); } catch(e){} }
 });
 
   init();
