@@ -93,12 +93,15 @@ header h1 span::before {
 }
 
   /* 画面が狭い/縦のときはパネルを下に回して1カラムに */
-@media (max-width: 850px) {
+@media (orientation: portrait) {
   .deck {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr auto;   /* キーボードを優先で広く */
+    gap: 10px;
+    padding: 8px 10px 10px;
+    overflow: auto;
   }
-  .panel { order: 2; }              /* パネルを下に */
+  .panel { order: 2; height: auto; max-hight: none;}              /* パネルを下に */
   .boardWrap { order: 1; }
 }
   
@@ -321,10 +324,10 @@ header h1 span::before {
 }
 
   /* ===== スマホ〜小さめiPad縦向け: 900px以下で1カラムに ===== */
-@media (max-width: 900px) {
+@media (orientation: landscape) and (max-width: 740px) {
   /* タイトルは自動で小さく＆折り返し可に */
   header h1 {
-    font-size: clamp(18px, 4.5vw, 28px);
+    font-size: clamp(16px, 4vw, 24px);
     flex-wrap: wrap;
     gap: 0.35em;
   }
@@ -727,12 +730,13 @@ function autoFit(){
 
   // 縦（狭い）では1カラムなのでパネル幅は全幅、横では割合で決める
   let panelW;
-  if (portrait && vw < 900) {
+  if (portrait) {
     panelW = innerVW;                    // 縦は下に回すので幅=100%
   } else {
-    const ratio  = portrait ? 0.28 : 0.30;
-    const minW   = portrait ? 170 : 190;
-    const maxW   = portrait ? 300 : 320;
+    const isSmallLandscape = vw < 740;
+    const ratio  = isSmallLandscape ? 0.36 : 0.30;
+    const minW   = portrait ? 180
+    const maxW   = portrait ? 320;
     panelW = Math.max(minW, Math.min(maxW, Math.round(innerVW * ratio)));
   }
   document.documentElement.style.setProperty('--panelW', panelW + 'px');
