@@ -92,6 +92,16 @@ header h1 span::before {
   overflow:hidden;
 }
 
+  /* 画面が狭い/縦のときはパネルを下に回して1カラムに */
+@media (max-width: 850px) {
+  .deck {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;   /* キーボードを優先で広く */
+  }
+  .panel { order: 2; }              /* パネルを下に */
+  .boardWrap { order: 1; }
+}
+  
 .panel,.boardWrap{
   background:rgba(255,255,255,.70);
   border:3px solid var(--muted);
@@ -547,9 +557,13 @@ if (saved) {
   document.documentElement.style.setProperty('--wallOpacity', .10);
 }
 
-  let voices=[], jpVoice=null, warmed=false, charMode=false;
-  const voiceSel=document.getElementById('voiceSelect');
-  const charToggleBtn=document.getElementById('charToggleBtn');
+let voices=[], jpVoice=null, warmed=false;
+// ★初期値は false。前回状態も復元できるように localStorage を参照
+let charMode = (localStorage.getItem('charMode') ?? 'false') === 'true';
+
+const voiceSel=document.getElementById('voiceSelect');
+const charToggleBtn=document.getElementById('charToggleBtn');
+  
   function uniqVoices(){
     const m=new Map();
     (speechSynthesis.getVoices()||[]).forEach(v=>{
@@ -566,7 +580,7 @@ if (saved) {
   voiceSel.addEventListener('change',()=>{ jpVoice=voices[voiceSel.selectedIndex]||null; });
   function warm(){ if(warmed) return; const u=new SpeechSynthesisUtterance(" "); u.lang="ja-JP"; u.volume=0; speechSynthesis.speak(u); warmed=true; }
 
-function sayOnce(text, opts={}){
+  function sayOnce(text, opts={}){
   try { speechSynthesis.resume(); } catch(e){}
   const u = new SpeechSynthesisUtterance(text || " ");
   if (jpVoice) u.voice = jpVoice;
@@ -648,38 +662,55 @@ function sayOnce(text, opts={}){
     }
   }
 
-  function autoFit(){
-  // 右パネルの幅は端末の向きで少し変える（任意）
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+function autoFit(){
+  const vw = innerWidth, vh = innerHeight;
   const portrait = vh > vw;
-  const ratio = portrait ? 0.32 : 0.28;           // ←お好みで微調整OK
-  const panelW = Math.round(vw * ratio);
+
+  // デッキの左右パディング分（12px * 左右 + 内部 12px）
+  const gutters = 12 + 12 + 12;
+  const innerVW = Math.max(320, vw - gutters);
+
+  // 縦（狭い）では1カラムなのでパネル幅は全幅、横では割合で決める
+  let panelW;
+  if (portrait && vw < 900) {
+    panelW = innerVW;                    // 縦は下に回すので幅=100%
+  } else {
+    const ratio  = portrait ? 0.28 : 0.30;
+    const minW   = portrait ? 170 : 190;
+    const maxW   = portrait ? 300 : 320;
+    panelW = Math.max(minW, Math.min(maxW, Math.round(innerVW * ratio)));
+  }
   document.documentElement.style.setProperty('--panelW', panelW + 'px');
 
-  // キーボード面（左）の内寸からキーサイズを計算
-  const board = document.querySelector('.boardWrap');
-  if (!board) return;
+  const bw   = document.querySelector('.boardWrap');
+  const leftW = bw.clientWidth;
 
-  const rootStyle = getComputedStyle(document.documentElement);
-  const gap = parseInt(rootStyle.getPropertyValue('--gap')) || 10;
+  // まず現在の gap を取得
+  const rootStyles = getComputedStyle(document.documentElement);
+  let gap = parseInt(rootStyles.getPropertyValue('--gap')) || 10;
 
-  // 10列 × 7行、行間・列間のギャップ合計を控除
-  const cols = 10, rows = 7;
-  const totalGapsX = (cols - 1) * gap;
-  const totalGapsY = (rows - 1) * gap + 16;  // ← grid内の8pxスペーサー×2ぶん
+  // 7段（かな5 + 記号1 + 操作1）、横10列、間は6段/9列のギャップ
+  const totalRows  = 7, totalGaps = 6, spacersHeight = 8 + 8;
+  const rowsH = bw.clientHeight - spacersHeight;
 
-  const bw = board.clientWidth;
-  const bh = board.clientHeight;
+  // 現在のギャップで試算
+  let keyW = Math.floor((leftW - (10 - 1) * gap) / 10);
+  let keyH = Math.floor((rowsH - totalGaps * gap) / totalRows);
+  let key  = Math.min(keyW, keyH);
 
-  const availW = bw - totalGapsX;
-  const availH = bh - totalGapsY;
+  // 狭すぎる時はギャップを詰める（6px）
+  if (key < 50) {
+    gap = 6;
+    document.documentElement.style.setProperty('--gap', gap + 'px');
+    keyW = Math.floor((leftW - (10 - 1) * gap) / 10);
+    keyH = Math.floor((rowsH - totalGaps * gap) / totalRows);
+    key  = Math.min(keyW, keyH);
+  } else {
+    document.documentElement.style.setProperty('--gap', '10px');
+  }
 
-  // 横・縦のどちらにも収まる最大サイズを採用（最小値の縛りは外す）
-  const keyW = Math.floor(availW / cols);
-  const keyH = Math.floor(availH / rows);
-  const key  = Math.min(keyW, keyH);
-
+  // 指の最小ターゲットを 36px まで許容
+  key = Math.max(36, Math.min(104, key));
   document.documentElement.style.setProperty('--key', key + 'px');
   document.documentElement.style.setProperty('--okSize', key + 'px');
 }
@@ -699,8 +730,18 @@ function sayOnce(text, opts={}){
   document.getElementById('tGreen').addEventListener('click', ()=>setTheme('green'));
   document.getElementById('tPink').addEventListener('click', ()=>setTheme('pink'));
 
-  function updateCharToggle(){ charToggleBtn.classList.toggle('on', charMode); }
-  document.getElementById('charToggleBtn').addEventListener('click', ()=>{ charMode=!charMode; updateCharToggle(); }, {passive:true});
+  // ここも置き換え
+function updateCharToggle(){
+  charToggleBtn.classList.toggle('on', charMode);
+  // ラベルをわかりやすく（任意）
+  // charToggleBtn.textContent = charMode ? 'ひともじずつよむ' : 'ふつうによむ';
+}
+
+document.getElementById('charToggleBtn').addEventListener('click', ()=>{
+  charMode = !charMode;
+  localStorage.setItem('charMode', String(charMode));   // ★保存
+  updateCharToggle();
+}, {passive:true});
 
   addEventListener('resize', autoFit); addEventListener('orientationchange', autoFit);
 
