@@ -376,6 +376,28 @@ header h1 span::before {
   .sliders label{ font-size: 12px; line-height: 1.2; }
   .nkey { height: clamp(52px, calc(var(--panelW)/3 - 18px), 88px); }
 }
+  /* 縦向きブロック用オーバーレイ（初期は非表示） */
+#rotateGate{
+  position: fixed; inset: 0;
+  display: none;
+  place-items: center;
+  background: rgba(255,255,255,.92);
+  z-index: 2000;
+}
+#rotateGate .rotateBox{
+  padding: 24px 28px;
+  border: 3px solid var(--accent);
+  border-radius: 16px;
+  background: #fff;
+  font-weight: 900;
+  font-size: clamp(18px, 3.2vw, 28px);
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,.12);
+}
+
+/* body に .portrait が付いたらアプリ本体を隠してゲートを出す */
+body.portrait .app{ visibility: hidden; }
+body.portrait #rotateGate{ display: grid; }
 
 </style>
 </head>
@@ -811,6 +833,19 @@ document.addEventListener('visibilitychange', ()=>{
   init();
 })();
 </script>
+  
+<script>
+(function(){
+  function updateOrientationGate(){
+    const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+    document.body.classList.toggle('portrait', isPortrait);
+  }
+  // 初期化 & 画面変化で反映
+  updateOrientationGate();
+  addEventListener('resize', updateOrientationGate, {passive:true});
+  addEventListener('orientationchange', updateOrientationGate, {passive:true});
+})();
+</script>
 
 <script>
 (function(){
@@ -837,5 +872,12 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
+<div id="rotateGate" aria-hidden="true">
+  <div class="rotateBox">
+    📱 たて向きでは つかいにくいよ！<br>
+    ＊ よこ向き に してね ＊
+  </div>
+</div>
+  
 </body>
 </html>
