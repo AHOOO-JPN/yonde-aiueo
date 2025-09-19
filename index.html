@@ -879,8 +879,9 @@ document.addEventListener('visibilitychange', ()=>{
 
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(console.error);
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    // 新しい SW に切り替わったら一度だけリロード
+    window.location.reload();
   });
 }
 </script>
