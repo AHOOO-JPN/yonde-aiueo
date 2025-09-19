@@ -264,7 +264,7 @@ header h1 span::before {
     font-size:calc(var(--key)*0.35);color:#111;
   }
   .okKey{
-    grid-column: 7 / span 4; 
+    grid-column: 7 / span -1; 
     height:var(--okSize);
     border: 5px solid var(--accent);
     border-radius:20px;
@@ -437,7 +437,8 @@ body.portrait #rotateGate{ display: grid; }
           <button class="themeBtn" id="tGreen" aria-label="テーマ 緑"></button>
           <button class="themeBtn" id="tPink" aria-label="テーマ ピンク"></button>
         </div>
-        <label class="customBtn" for="bgPicker">🖼️はいけいをえらぶ</label>
+        <label class="customBtn" for="bgPicker" style="grid-column: 1 / 3;">🖼️はいけいをえらぶ</label>
+        <button class="customBtn" id="bgResetBtn">リセット</button>
         <input id="bgPicker" class="fileInput" type="file" accept="image/*">
       </div>
 
@@ -520,7 +521,7 @@ body.portrait #rotateGate{ display: grid; }
   
   function handleSymbol(s){
     if(s==="゛"||s==="゜"){
-      const arr=Array.from(display.textContent); if(!arr.length) return;
+      const arr=Array.from(...display.textContent); if(!arr.length) return;
       const last=arr[arr.length-1];
       const rep=(s==="゛")?(daku[last]||rd[last]):(hand[last]||rh[last]);
       if(rep){
@@ -579,6 +580,15 @@ if (saved) {
   document.documentElement.style.setProperty('--wallOpacity', .10);
 }
 
+// 背景リセットボタンの機能を追加
+const bgResetBtn = document.getElementById('bgResetBtn');
+bgResetBtn.addEventListener('click', () => {
+  localStorage.removeItem('bgImage'); // 保存したデータを削除
+  // CSS変数を初期値に戻す
+  document.documentElement.style.setProperty('--wall', 'none');
+  document.documentElement.style.setProperty('--wallOpacity', 0);
+}, {passive:true});
+  
 let voices=[], jpVoice=null, warmed=false;
 // ★初期値は false。前回状態も復元できるように localStorage を参照
 let charMode = (localStorage.getItem('charMode') ?? 'false') === 'true';
@@ -593,6 +603,7 @@ const charToggleBtn=document.getElementById('charToggleBtn');
       const k=v.name+"|"+v.lang; if(!m.has(k)) m.set(k,v);
     }); return [...m.values()];
   }
+
   function populateVoices(){
     voices=uniqVoices(); voiceSel.innerHTML="";
     voices.forEach((v,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=`${v.name} (${v.lang})`; voiceSel.appendChild(o); });
