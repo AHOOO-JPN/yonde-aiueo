@@ -117,10 +117,13 @@ header h1 span::before {
   flex-direction: column;
   gap: var(--panelGap);
   overflow: auto;
+  justify-content: flex-start;
+  align-items: stretch;
 }
+  
 .panel > .sliders {
-  margin-top: auto;
-  margin-bottom: auto;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--panelGap);}
@@ -241,7 +244,13 @@ header h1 span::before {
   }
   .editBtn.primary{ background:var(--accentDark); color:#fff }
 
-  .boardWrap{display:grid;grid-template-rows:auto 8px auto 8px auto;gap:0;overflow:hidden}
+  .boardWrap{
+    display:grid;
+    grid-template-rows:auto 8px auto 8px auto;
+    gap:0;
+    overflow:hidden
+    align-content: start;
+  }
   
   .kanaGrid{
     display:grid;
