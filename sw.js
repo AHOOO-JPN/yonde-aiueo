@@ -1,6 +1,6 @@
 // sw.js
 // v3 – cache bust
-const CACHE_NAME = 'yonde-v13';
+const CACHE_NAME = 'yonde-v14';
 const APP_SHELL = [
   './',
   '/yonde-aiueo/index.html', // ← GitHub Pages のリポ名配下で配信されるならフル/相対を揃える
