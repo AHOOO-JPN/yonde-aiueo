@@ -94,14 +94,19 @@ header h1 span::before {
 
   /* 画面が狭い/縦のときはパネルを下に回して1カラムに */
 @media (orientation: portrait) {
+/* デフォルトは 2カラム */
+.deck {
+  grid-template-columns: 1fr var(--panelW);
+  grid-template-rows: auto;
+}
+
+/* 縦向きのときだけ強制1カラム */
+@media (orientation: portrait) {
   .deck {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;   /* キーボードを優先で広く */
-    gap: 10px;
-    padding: 8px 10px 10px;
-    overflow: auto;
+    grid-template-rows: 1fr auto; /* キーボード優先 */
   }
-  .panel { order: 2; height: auto; max-hight: none;}              /* パネルを下に */
+  .panel { order: 2; }
   .boardWrap { order: 1; }
 }
   
