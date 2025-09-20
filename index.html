@@ -245,11 +245,22 @@ header h1 span::before {
   .editBtn.primary{ background:var(--accentDark); color:#fff }
 
   .boardWrap{
-    display:flex;
-    flex-direction: colum;
-    align-items: flex-start;
-    justify-content: flex-start;
-  }
+  /* ← ここは flex ではなく grid のまま */
+  display: grid;
+  grid-template-rows: auto 8px auto 8px auto; /* かな / spacer / 記号 / spacer / アクション */
+  gap: 0;
+  overflow: hidden;
+  background: rgba(255,255,255,.70);
+  border: 3px solid var(--muted);
+  border-radius: 18px;
+  padding: 12px;
+  height: 100%;
+  min-height: 0;
+
+  /* 余った高さの配分を「上に寄せる」 */
+  align-content: start;   /* 縦方向の詰め先を上に */
+  justify-content: start; /* 横方向も必要なら左に（任意） */
+}
   
   .kanaGrid{
     display:grid;
