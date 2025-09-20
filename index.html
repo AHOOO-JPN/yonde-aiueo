@@ -245,11 +245,10 @@ header h1 span::before {
   .editBtn.primary{ background:var(--accentDark); color:#fff }
 
   .boardWrap{
-    display:grid;
-    grid-template-rows:auto 8px auto 8px auto;
-    gap:0;
-    overflow:hidden
-    align-content: start;
+    display:flex;
+    flex-direction: colum;
+    align-items: flex-start;
+    justify-content: flex-start;
   }
   
   .kanaGrid{
