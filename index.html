@@ -4,7 +4,8 @@
 <meta charset="utf-8" />
 
 <meta name="viewport"
-  content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=yes, maximum-scale=5" />
+
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#3B82F6">
@@ -29,6 +30,7 @@
     /* 初期テーマ：あお */
     --bg-strong:#e7f0ff; --accent:#3B82F6; --accentDark:#1E40AF;
     --wall:none; --wallOpacity:0; /* 📷カスタム背景 */
+    --minAppW: 980px;
   }
  html,body{
    height:100%;margin:0;
@@ -48,7 +50,8 @@
   height: 100svh;
   display: grid;
   grid-template-rows: auto auto 1fr;
-  overflow: hidden;
+  overflow: auto;
+  min-width: var(--minAppW);
 }
 
 @supports not (height: 100svh) {
@@ -84,23 +87,13 @@ header h1 span::before {
 
 .deck{
   display:grid;
-  grid-template-columns: minmax(0,1fr) minmax(0,var(--panelW));
+  grid-template-columns: minmax(0,1fr) minmax(280px,var(--panelW));
   gap:12px;
   padding:8px 12px 12px;
   height:100%;
   min-height:0;
   overflow:hidden;
-}
-
-/* 縦向きのときだけ強制1カラム */
-/* 縦向きは1カラムにしてパネルを下へ */
-@media (orientation: portrait) {
-  .deck {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto; /* キーボード優先 */
-  }
-  .panel { order: 2; height: auto; max-height: none; }
-  .boardWrap { order: 1; }
+  align-items: stretch;
 }
   
 .panel,.boardWrap{
@@ -138,14 +131,17 @@ header h1 span::before {
   grid-template-columns: repeat(5, 1fr);
   gap: 8px;
 }
-.themeBtn {
-  aspect-ratio: 1 / 1;
+
+
+.themeBtn{
+  width: var(--panelCellH);
+  height: var(--panelCellH);
+  aspect-ratio: 1 / 1;          /* 正円を強制 */
   border-radius: 50%;
   border: 3px solid var(--muted);
   cursor: pointer;
-  height: var(--panelCellH); 
-  width:auto; aspect-ratio: unset;
 }
+
 #tRed    { background-color: #E84C3D; }
 #tBlue   { background-color: #3B82F6; }
 #tYellow { background-color: #ECA400; }
@@ -228,14 +224,24 @@ header h1 span::before {
   box-shadow: none;
 }
 
-  .tenkey{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  .nkey{
-    width:100%;
-    height:clamp(58px, calc(var(--panelW)/3 - 16px), 96px);
-    border:2px solid var(--accent);border-radius:16px;background:#fff;font-weight:900;
-    font-size:calc(var(--key)*0.5);color:#111; box-shadow:0 2px 0 rgba(0,0,0,.06)
-  }
-  .nkey.zero{grid-column:2}
+.tenkey{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(56px, 1fr));
+  gap:12px;
+}
+.nkey{
+  width:100%;
+  aspect-ratio:1 / 1;            /* 正方形に固定 */
+  height:auto;                    /* 高さは比率に任せる */
+  border:2px solid var(--accent);
+  border-radius:16px;
+  background:#fff;
+  font-weight:900;
+  font-size:clamp(18px, calc(var(--key)*0.45), 28px);
+  color:#111;
+  box-shadow:0 2px 0 rgba(0,0,0,.06);
+}
+ .nkey.zero{grid-column:2}
 
   .editRow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .editBtn{
@@ -310,7 +316,7 @@ header h1 span::before {
 
   select{appearance:none}
   
-  html, body, button { touch-action: manipulation; }
+  button { touch-action: manipulation; }
   
   .sliders{display:grid;grid-template-columns:80px 1fr;gap:12px 18px;align-items:center}
   .sliders label{text-align:center;line-height: 1.3;font-size: 14px;color:#444;font-weight:600;}
@@ -392,9 +398,9 @@ header h1 span::before {
   box-shadow: 0 8px 20px rgba(0,0,0,.12);
 }
 
-/* body に .portrait が付いたらアプリ本体を隠してゲートを出す */
-body.portrait .app{ visibility: hidden; }
-body.portrait #rotateGate{ display: grid; }
+/* 縦向きブロックを完全にオフ */
+body.portrait .app{ visibility: visible !important; }
+body.portrait #rotateGate{ display: none !important; }
 
 </style>
 </head>
@@ -713,47 +719,33 @@ const charToggleBtn=document.getElementById('charToggleBtn');
       await sayOnce(seg + p, { rate: excited ? 1.12 : undefined, pitch: excited ? 1.18 : undefined });
     }
   }
-
 function autoFit(){
-  const vw = innerWidth, vh = innerHeight;
-  const portrait = vh > vw;
-
-  // デッキの左右パディング分（12*3）
-  const gutters = 36;
+  const vw = innerWidth;
+  const gutters = 36;                 // 左右パディング分
   const innerVW = Math.max(320, vw - gutters);
 
-  // パネル幅の決定
-  let panelW;
-  if (portrait) {
-    // 縦はパネルを下に回す＝幅100%
-    panelW = innerVW;
-  } else {
-    // iPhone横など狭い横向きはやや広めに確保
-    const isSmallLandscape = vw < 740;
-    const ratio = isSmallLandscape ? 0.36 : 0.30;
-    const minW  = isSmallLandscape ? 180 : 190;
-    const maxW  = isSmallLandscape ? 300 : 320;
-    panelW = Math.max(minW, Math.min(maxW, Math.round(innerVW * ratio)));
-  }
+  // ★縦横で同じ比率を使う
+  const RATIO = 0.32;                 // 好みで 0.30〜0.36
+  const MINW  = 200;                  // 右パネルの最小幅
+  const MAXW  = 360;                  // 右パネルの最大幅
+  const panelW = Math.max(MINW, Math.min(MAXW, Math.round(innerVW * RATIO)));
+
   document.documentElement.style.setProperty('--panelW', panelW + 'px');
 
+  // ===== 左側キーボードのキー計算（そのまま） =====
   const bw   = document.querySelector('.boardWrap');
   const leftW = bw.clientWidth;
 
-  // 現在の gap を取得
   const rootStyles = getComputedStyle(document.documentElement);
   let gap = parseInt(rootStyles.getPropertyValue('--gap')) || 10;
 
-  // 7段（かな5 + 記号1 + 操作1）、横10列、間は6段/9列のギャップ
   const totalRows  = 7, totalGaps = 6, spacersHeight = 8 + 8;
   const rowsH = bw.clientHeight - spacersHeight;
 
-  // 現在のギャップで試算
   let keyW = Math.floor((leftW - (10 - 1) * gap) / 10);
   let keyH = Math.floor((rowsH - totalGaps * gap) / totalRows);
   let key  = Math.min(keyW, keyH);
 
-  // 狭すぎる時はギャップを詰める（6px）
   if (key < 50) {
     gap = 6;
     document.documentElement.style.setProperty('--gap', gap + 'px');
@@ -764,7 +756,6 @@ function autoFit(){
     document.documentElement.style.setProperty('--gap', '10px');
   }
 
-  // 指の最小ターゲットを 36px まで許容
   key = Math.max(36, Math.min(104, key));
   document.documentElement.style.setProperty('--key', key + 'px');
   document.documentElement.style.setProperty('--okSize', key + 'px');
@@ -885,13 +876,5 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
-
-<div id="rotateGate" aria-hidden="true">
-  <div class="rotateBox">
-    📱 たて向きでは つかいにくいよ！<br>
-    ＊ よこ向き に してね ＊
-  </div>
-</div>
-  
 </body>
 </html>
